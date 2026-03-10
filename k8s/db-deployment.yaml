@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: taskmanager-db
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      containers:
+        - name: db
+          image: mysql:8
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: rootpassword
+            - name: MYSQL_DATABASE
+              value: taskmanager
+          ports:
+            - containerPort: 3306
+          volumeMounts:
+            - name: db-storage
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: db-storage
+          persistentVolumeClaim:
+            claimName: db-pvc
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: db-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
