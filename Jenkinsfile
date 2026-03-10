@@ -1,65 +1,56 @@
 pipeline {
     agent any
 
-    environment {
-        REPO = 'https://github.com/itsakrana/kubernetes_project.git'
-        DOCKER_CREDENTIALS = 'dockerhub-creds'  // Jenkins Docker Hub credentials ID
-        BACKEND_IMAGE = 'akrana2006/backend'  // Change to your Docker Hub repo
-        FRONTEND_IMAGE = 'akrana2006/frontend' // Change to your Docker Hub repo
-    }
-
     stages {
+
         stage('Checkout') {
             steps {
-                git branch: 'master', url: "${REPO}"  // Change branch if needed
+                git credentialsId: 'github-cred',
+                url: 'https://github.com/itsakrana/kubernetes_project.git'
             }
         }
 
         stage('Build Docker Images') {
             steps {
-                script {
-                    docker.build("${BACKEND_IMAGE}:latest", "./backend")
-                    docker.build("${FRONTEND_IMAGE}:latest", "./frontend")
-                }
+                sh 'docker build -t akrana2006/backend:latest ./backend'
+                sh 'docker build -t akrana2006/frontend:latest ./frontend'
             }
         }
 
         stage('Push Docker Images') {
             steps {
-                script {
-                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDENTIALS}") {
-                        docker.image("${BACKEND_IMAGE}:latest").push()
-                        docker.image("${FRONTEND_IMAGE}:latest").push()
-                        docker.image("${BACKEND_IMAGE}:latest").push('latest')
-                        docker.image("${FRONTEND_IMAGE}:latest").push('latest')
-                    }
+                withDockerRegistry([credentialsId: 'dockerhub-cred', url: '']) {
+                    sh 'docker push akrana2006/backend:latest'
+                    sh 'docker push akrana2006/frontend:latest'
                 }
+            }
+        }
+
+        stage('Cleanup Old Containers') {
+            steps {
+                sh 'docker rm -f taskmanager-db taskmanager-backend || true'
             }
         }
 
         stage('Docker Compose') {
             steps {
-                script {
-                    sh 'docker-compose up -d --build'  // Make sure docker-compose.yml exists at repo root
-                }
+                sh 'docker-compose up -d --build'
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                script {
-                    sh 'kubectl apply -f k8s/'  // Applies all YAMLs in k8s folder
-                }
+                sh 'kubectl apply -f k8s/'
             }
         }
     }
 
     post {
         success {
-            echo '✅ Pipeline completed successfully!'
+            echo "✅ Pipeline completed successfully!"
         }
         failure {
-            echo '❌ Pipeline failed!'
+            echo "❌ Pipeline failed!"
         }
     }
 }
