@@ -2,51 +2,62 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub-id') // Jenkins credentials ID
-        IMAGE_BACKEND = "ankitrana/taskmanager-backend"
-        IMAGE_FRONTEND = "ankitrana/taskmanager-frontend"
-        COMPOSE_FILE = "docker-compose.yml"
+        GIT_CREDENTIALS = 'github-cred'       // GitHub credential ID
+        DOCKER_CREDENTIALS = 'dockerhub-cred' // Docker Hub credential ID
+        DOCKER_IMAGE = 'itsakrana/taskmanager' // Docker image name
+        COMPOSE_FILE = 'docker-compose.yml'    // Compose file
+        K8S_MANIFEST = 'k8s/'                  // Folder containing k8s manifests
     }
 
     stages {
+
         stage('Checkout Code') {
             steps {
-                git branch: 'main', url: 'https://github.com/yourusername/taskmanager-project.git'
+                git credentialsId: "${GIT_CREDENTIALS}", url: 'https://github.com/itsakrana/kubernetes_project.git', branch: 'master'
             }
         }
 
         stage('Build Docker Images') {
             steps {
                 script {
-                    sh 'docker build -t $IMAGE_BACKEND ./backend'
-                    sh 'docker build -t $IMAGE_FRONTEND ./frontend'
+                    docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDENTIALS}") {
+                        // Backend
+                        def backend = docker.build("${DOCKER_IMAGE}-backend", "./backend")
+                        backend.push('latest')
+                        
+                        // Frontend
+                        def frontend = docker.build("${DOCKER_IMAGE}-frontend", "./frontend")
+                        frontend.push('latest')
+                    }
                 }
             }
         }
 
-        stage('Push to Docker Hub') {
+        stage('Docker Compose Up') {
             steps {
                 script {
-                    sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
-                    sh 'docker push $IMAGE_BACKEND'
-                    sh 'docker push $IMAGE_FRONTEND'
+                    sh "docker-compose -f ${COMPOSE_FILE} down -v"
+                    sh "docker-compose -f ${COMPOSE_FILE} up -d --build"
                 }
             }
         }
 
-        stage('Run Docker Compose') {
+        stage('Kubernetes Deployment') {
             steps {
-                sh "docker-compose -f $COMPOSE_FILE up -d --build"
+                script {
+                    sh "kubectl apply -f ${K8S_MANIFEST}"
+                }
             }
         }
+
     }
 
     post {
         success {
-            echo 'Deployment Successful!'
+            echo 'Pipeline finished successfully!'
         }
         failure {
-            echo 'Something went wrong!'
+            echo 'Pipeline failed. Check logs.'
         }
     }
 }
