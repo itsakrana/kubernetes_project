@@ -2,62 +2,64 @@ pipeline {
     agent any
 
     environment {
-        GIT_CREDENTIALS = 'github-cred'       // GitHub credential ID
-        DOCKER_CREDENTIALS = 'dockerhub-cred' // Docker Hub credential ID
-        DOCKER_IMAGE = 'itsakrana/taskmanager' // Docker image name
-        COMPOSE_FILE = 'docker-compose.yml'    // Compose file
-        K8S_MANIFEST = 'k8s/'                  // Folder containing k8s manifests
+        REPO = 'https://github.com/itsakrana/kubernetes_project.git'
+        DOCKER_CREDENTIALS = 'dockerhub-creds'  // Jenkins Docker Hub credentials ID
+        BACKEND_IMAGE = 'akrana2006/backend'  // Change to your Docker Hub repo
+        FRONTEND_IMAGE = 'akrana2006/frontend' // Change to your Docker Hub repo
     }
 
     stages {
-
-        stage('Checkout Code') {
+        stage('Checkout') {
             steps {
-                git credentialsId: "${GIT_CREDENTIALS}", url: 'https://github.com/itsakrana/kubernetes_project.git', branch: 'master'
+                git branch: 'master', url: "${REPO}"  // Change branch if needed
             }
         }
 
         stage('Build Docker Images') {
             steps {
                 script {
+                    docker.build("${BACKEND_IMAGE}:latest", "./backend")
+                    docker.build("${FRONTEND_IMAGE}:latest", "./frontend")
+                }
+            }
+        }
+
+        stage('Push Docker Images') {
+            steps {
+                script {
                     docker.withRegistry('https://index.docker.io/v1/', "${DOCKER_CREDENTIALS}") {
-                        // Backend
-                        def backend = docker.build("${DOCKER_IMAGE}-backend", "./backend")
-                        backend.push('latest')
-                        
-                        // Frontend
-                        def frontend = docker.build("${DOCKER_IMAGE}-frontend", "./frontend")
-                        frontend.push('latest')
+                        docker.image("${BACKEND_IMAGE}:latest").push()
+                        docker.image("${FRONTEND_IMAGE}:latest").push()
+                        docker.image("${BACKEND_IMAGE}:latest").push('latest')
+                        docker.image("${FRONTEND_IMAGE}:latest").push('latest')
                     }
                 }
             }
         }
 
-        stage('Docker Compose Up') {
+        stage('Docker Compose') {
             steps {
                 script {
-                    sh "docker-compose -f ${COMPOSE_FILE} down -v"
-                    sh "docker-compose -f ${COMPOSE_FILE} up -d --build"
+                    sh 'docker-compose up -d --build'  // Make sure docker-compose.yml exists at repo root
                 }
             }
         }
 
-        stage('Kubernetes Deployment') {
+        stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    sh "kubectl apply -f ${K8S_MANIFEST}"
+                    sh 'kubectl apply -f k8s/'  // Applies all YAMLs in k8s folder
                 }
             }
         }
-
     }
 
     post {
         success {
-            echo 'Pipeline finished successfully!'
+            echo '✅ Pipeline completed successfully!'
         }
         failure {
-            echo 'Pipeline failed. Check logs.'
+            echo '❌ Pipeline failed!'
         }
     }
 }
