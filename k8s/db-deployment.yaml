@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: taskmanager-db
+  labels:
+    app: db
 spec:
   replicas: 1
   selector:
@@ -14,29 +16,20 @@ spec:
     spec:
       containers:
         - name: db
-          image: mysql:8
-          env:
-            - name: MYSQL_ROOT_PASSWORD
-              value: rootpassword
-            - name: MYSQL_DATABASE
-              value: taskmanager
+          image: mysql:8.0          # MySQL official image
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3306
-          volumeMounts:
-            - name: db-storage
-              mountPath: /var/lib/mysql
-      volumes:
-        - name: db-storage
-          persistentVolumeClaim:
-            claimName: db-pvc
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: db-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: "rootpassword"       # Required for MySQL
+            - name: MYSQL_DATABASE
+              value: "taskmanager"        # Your DB name
+          resources:
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+      restartPolicy: Always
