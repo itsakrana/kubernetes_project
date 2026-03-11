@@ -1,56 +1,57 @@
 pipeline {
-    agent any
+agent any
 
-    stages {
+environment {
+    DOCKERHUB_CREDENTIALS = 'dockerhub-cred'
+    GITHUB_CREDENTIALS = 'github-cred'
+}
 
-        stage('Checkout') {
-            steps {
-                git credentialsId: 'github-cred',
-                url: 'https://github.com/itsakrana/kubernetes_project.git'
-            }
+stages {
+
+    stage('Checkout Code') {
+        steps {
+            git url: 'https://github.com/itsakrana/kubernetes_project.git',
+            credentialsId: "${GITHUB_CREDENTIALS}"
         }
+    }
 
-        stage('Build Docker Images') {
-            steps {
-                sh 'docker build -t akrana2006/backend:latest ./backend'
-                sh 'docker build -t akrana2006/frontend:latest ./frontend'
-            }
+    stage('Build Docker Images') {
+        steps {
+            sh 'docker build -t akrana2006/backend:latest ./backend'
+            sh 'docker build -t akrana2006/frontend:latest ./frontend'
         }
+    }
 
-        stage('Push Docker Images') {
-            steps {
-                withDockerRegistry([credentialsId: 'dockerhub-cred', url: '']) {
-                    sh 'docker push akrana2006/backend:latest'
-                    sh 'docker push akrana2006/frontend:latest'
-                }
-            }
-        }
-
-        stage('Cleanup Old Containers') {
-            steps {
-                sh 'docker rm -f taskmanager-db taskmanager-backend || true'
-            }
-        }
-
-        stage('Docker Compose') {
-            steps {
-                sh 'docker-compose up -d --build'
-            }
-        }
-
-        stage('Deploy to Kubernetes') {
-            steps {
-                sh 'kubectl apply -f k8s/'
+    stage('Push Docker Images to DockerHub') {
+        steps {
+            withDockerRegistry([credentialsId: "${DOCKERHUB_CREDENTIALS}", url: 'https://index.docker.io/v1/']) {
+                sh 'docker push akrana2006/backend:latest'
+                sh 'docker push akrana2006/frontend:latest'
             }
         }
     }
 
-    post {
-        success {
-            echo "✅ Pipeline completed successfully!"
-        }
-        failure {
-            echo "❌ Pipeline failed!"
+    stage('Deploy to Kubernetes') {
+        steps {
+            sh 'kubectl apply -f k8s/ -n taskmanager'
         }
     }
+
+    stage('Verify Deployment') {
+        steps {
+            sh 'kubectl get pods -n taskmanager'
+            sh 'kubectl get services -n taskmanager'
+        }
+    }
+}
+
+post {
+    success {
+        echo "✅ Pipeline completed successfully!"
+    }
+    failure {
+        echo "❌ Pipeline failed!"
+    }
+}
+
 }
