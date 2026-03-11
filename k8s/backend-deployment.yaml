@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: akrana2006/taskmanager-backend:latest
+          image: backend-image
           ports:
             - containerPort: 5000
           env:
