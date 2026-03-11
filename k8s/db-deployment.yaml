@@ -2,8 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: taskmanager-db
-  labels:
-    app: db
 spec:
   replicas: 1
   selector:
@@ -16,20 +14,13 @@ spec:
     spec:
       containers:
         - name: db
-          image: mysql:8.0          # MySQL official image
+          image: mysql:8.0
           imagePullPolicy: IfNotPresent
-          ports:
-            - containerPort: 3306
           env:
             - name: MYSQL_ROOT_PASSWORD
-              value: "rootpassword"       # Required for MySQL
+              value: "root123"
             - name: MYSQL_DATABASE
-              value: "taskmanager"        # Your DB name
-          resources:
-            limits:
-              memory: "512Mi"
-              cpu: "500m"
-            requests:
-              memory: "256Mi"
-              cpu: "250m"
-      restartPolicy: Always
+              value: "taskmanager"
+          ports:
+            - containerPort: 3306
+
