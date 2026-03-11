@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: akrana2006/taskmanager-frontend:latest
+          image: frontend-image
           ports:
             - containerPort: 3000
