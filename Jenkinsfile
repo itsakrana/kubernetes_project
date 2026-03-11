@@ -1,6 +1,7 @@
 pipeline {
 agent any
 
+```
 environment {
     DOCKERHUB_CREDENTIALS = 'dockerhub-cred'
     GITHUB_CREDENTIALS = 'github-cred'
@@ -10,8 +11,8 @@ stages {
 
     stage('Checkout Code') {
         steps {
-            git url: 'https://github.com/itsakrana/kubernetes_project.git',
-            credentialsId: "${GITHUB_CREDENTIALS}"
+            git credentialsId: "${GITHUB_CREDENTIALS}",
+                url: 'https://github.com/itsakrana/kubernetes_project.git'
         }
     }
 
@@ -33,14 +34,13 @@ stages {
 
     stage('Deploy to Kubernetes') {
         steps {
-            sh 'kubectl apply -f k8s/ -n taskmanager'
+            sh 'kubectl apply -f k8s/'
         }
     }
 
     stage('Verify Deployment') {
         steps {
-            sh 'kubectl get pods -n taskmanager'
-            sh 'kubectl get services -n taskmanager'
+            sh 'kubectl get all -n taskmanager'
         }
     }
 }
@@ -53,5 +53,6 @@ post {
         echo "❌ Pipeline failed!"
     }
 }
+```
 
 }
