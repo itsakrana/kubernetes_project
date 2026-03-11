@@ -18,16 +18,23 @@ stages {
 
     stage('Build Docker Images') {
         steps {
-            sh 'docker build -t akrana2006/backend:latest ./backend'
-            sh 'docker build -t akrana2006/frontend:latest ./frontend'
+            sh 'docker build -t backend-image:latest ./backend'
+            sh 'docker build -t frontend-image:latest ./frontend'
+        }
+    }
+
+    stage('Tag Images for DockerHub') {
+        steps {
+            sh 'docker tag backend-image:latest akrana2006/backend-image:latest'
+            sh 'docker tag frontend-image:latest akrana2006/frontend-image:latest'
         }
     }
 
     stage('Push Docker Images to DockerHub') {
         steps {
             withDockerRegistry([credentialsId: "${DOCKERHUB_CREDENTIALS}", url: 'https://index.docker.io/v1/']) {
-                sh 'docker push akrana2006/backend:latest'
-                sh 'docker push akrana2006/frontend:latest'
+                sh 'docker push akrana2006/backend-image:latest'
+                sh 'docker push akrana2006/frontend-image:latest'
             }
         }
     }
@@ -56,3 +63,4 @@ post {
 ```
 
 }
+
