@@ -38,19 +38,6 @@ stages {
         }
     }
 
-    stage('Deploy to Kubernetes') {
-        steps {
-            sh 'kubectl apply -f k8s/ --validate=false'
-        }
-    }
-
-    stage('Verify Deployment') {
-        steps {
-            sh 'kubectl get all -n taskmanager'
-        }
-    }
-}
-
 post {
     success {
         echo "✅ Pipeline completed successfully!"
