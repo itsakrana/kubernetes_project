@@ -1,7 +1,6 @@
 pipeline {
 agent any
 
-```
 environment {
     DOCKERHUB_CREDENTIALS = 'dockerhub-cred'
     GITHUB_CREDENTIALS = 'github-cred'
@@ -60,7 +59,6 @@ post {
         echo "❌ Pipeline failed!"
     }
 }
-```
 
 }
 
