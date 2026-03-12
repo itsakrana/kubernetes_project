@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: backend-image:latest
+          image: akrana2006/backend-image:latest
           imagePullPolicy: IfNotPresent
           env:
             - name: DB_HOST
