@@ -30,7 +30,7 @@ It automates the entire workflow from **code commit → CI build → Docker imag
 ---
 
 ## 📦 Project Structure
-
+```
 kubernetes_project/
 ├── backend/
 │ ├── app.py
@@ -50,7 +50,7 @@ kubernetes_project/
 ├── Jenkinsfile
 └── README.md
 
-
+```
 ---
 
 ## 🧪 Prerequisites
@@ -63,7 +63,7 @@ Before running this project, ensure you have:
 - Git 🔗 configured  
 
 ---
-
+```
 ## 📌 Setup & Deployment
 
 ### 1️⃣ Start Minikube
@@ -77,6 +77,8 @@ kubectl apply -f k8s/
 
 4️⃣ Open the Frontend
 minikube service frontend-service -n taskmanager
+
+```
 
 🔧 Jenkins Pipeline
 
@@ -98,9 +100,12 @@ These define:
 3.Services (ClusterIP / NodePort)
 4.Namespace support
 
+```
 🚀 Outcomes
 
 ✅ Fully automated CI/CD pipeline
 ✅ Repeatable deployments with Kubernetes
 ✅ Hands-on DevOps experience
 ✅ Real-world deployment automation
+
+```
